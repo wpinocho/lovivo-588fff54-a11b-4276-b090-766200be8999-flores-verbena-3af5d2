@@ -34,7 +34,7 @@ export const IndexUI = ({ logic }: IndexUIProps) => {
       {/* Hero Section */}
       <section className="relative h-[500px] md:h-[600px] overflow-hidden">
         <img 
-          src="/src/assets/hero-flores.jpg" 
+          src="https://ptgmltivisbtvmoxwnhd.supabase.co/storage/v1/object/public/product-images/588fff54-a11b-4276-b090-766200be8999/hero-flores.jpg" 
           alt="Flores a Domicilio" 
           className="w-full h-full object-cover"
         />
@@ -91,7 +91,7 @@ export const IndexUI = ({ logic }: IndexUIProps) => {
             <div className="group cursor-pointer">
               <div className="aspect-square rounded-2xl overflow-hidden mb-4 shadow-lg group-hover:shadow-xl transition-shadow">
                 <img 
-                  src="/src/assets/cat-flores.jpg" 
+                  src="https://ptgmltivisbtvmoxwnhd.supabase.co/storage/v1/object/public/product-images/588fff54-a11b-4276-b090-766200be8999/cat-flores.jpg" 
                   alt="Flores" 
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                 />
@@ -102,7 +102,7 @@ export const IndexUI = ({ logic }: IndexUIProps) => {
             <div className="group cursor-pointer">
               <div className="aspect-square rounded-2xl overflow-hidden mb-4 shadow-lg group-hover:shadow-xl transition-shadow">
                 <img 
-                  src="/src/assets/cat-plantas.jpg" 
+                  src="https://ptgmltivisbtvmoxwnhd.supabase.co/storage/v1/object/public/product-images/588fff54-a11b-4276-b090-766200be8999/cat-plantas.jpg" 
                   alt="Plantas" 
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                 />
@@ -113,7 +113,7 @@ export const IndexUI = ({ logic }: IndexUIProps) => {
             <div className="group cursor-pointer">
               <div className="aspect-square rounded-2xl overflow-hidden mb-4 shadow-lg group-hover:shadow-xl transition-shadow">
                 <img 
-                  src="/src/assets/cat-regalos.jpg" 
+                  src="https://ptgmltivisbtvmoxwnhd.supabase.co/storage/v1/object/public/product-images/588fff54-a11b-4276-b090-766200be8999/cat-regalos.jpg" 
                   alt="Regalos" 
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                 />
@@ -124,7 +124,7 @@ export const IndexUI = ({ logic }: IndexUIProps) => {
             <div className="group cursor-pointer">
               <div className="aspect-square rounded-2xl overflow-hidden mb-4 shadow-lg group-hover:shadow-xl transition-shadow">
                 <img 
-                  src="/src/assets/cat-pasteles.jpg" 
+                  src="https://ptgmltivisbtvmoxwnhd.supabase.co/storage/v1/object/public/product-images/588fff54-a11b-4276-b090-766200be8999/cat-pasteles.jpg" 
                   alt="Pasteles" 
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                 />
