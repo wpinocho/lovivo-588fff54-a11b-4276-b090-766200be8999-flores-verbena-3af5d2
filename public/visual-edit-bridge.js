@@ -56,7 +56,7 @@
       maxDepth: 10,
       preferDataAttributes: true,
       filterTailwind: true,
-      throttleMs: 16, // ~60fps (16ms per frame)
+      throttleMs: 33, // ~60fps (16ms per frame)
       enableDebug: false,
       allowedOrigins: [], // Allowed message origins for security (incoming)
       strictOriginCheck: false, // Set to true to enforce strict origin validation
