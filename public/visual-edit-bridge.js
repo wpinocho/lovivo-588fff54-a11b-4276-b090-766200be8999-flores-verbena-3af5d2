@@ -1224,6 +1224,58 @@
     };
   }
 
+  // ===== AUTO-CONFIGURATION FOR LOVIVO/LOVABLE =====
+  
+  /**
+   * Auto-configure security settings for Lovivo and Lovable domains
+   * This runs automatically and configures wildcards for:
+   * - Lovable.app (editor and previews)
+   * - Lovivo.app (all subdomains)
+   */
+  (function autoConfigureLovivo() {
+    // Detect if we're in development (localhost)
+    const isDevelopment = window.location.hostname === 'localhost' || 
+                         window.location.hostname === '127.0.0.1';
+
+    // Configure allowed origins with wildcards
+    configure({
+      // ALLOWED ORIGINS (Incoming messages)
+      allowedOrigins: [
+        // Lovable.app - Editor and previews
+        'https://*.lovable.app',
+        'https://lovable.app',
+        
+        // Lovivo.app - Production and subdomains
+        'https://*.lovivo.app',
+        'https://lovivo.app',
+        
+        // Localhost for development
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:5173'
+      ],
+
+      // Security settings
+      strictOriginCheck: false,    // Allow parent window by default
+      autoDetectParent: true,      // Auto-detect parent origin for outgoing messages
+
+      // Enable debug only in development
+      enableDebug: isDevelopment
+    });
+
+    console.log('🔒 Lovivo security configured');
+    console.log('📋 Allowed origins:', [
+      '*.lovable.app',
+      '*.lovivo.app',
+      'localhost (dev)'
+    ]);
+    
+    if (isDevelopment) {
+      console.log('🐛 Debug mode: ENABLED (localhost detected)');
+    }
+  })();
+
   // Cleanup on page unload
   window.addEventListener('beforeunload', () => {
     deactivateVisualEditMode();
