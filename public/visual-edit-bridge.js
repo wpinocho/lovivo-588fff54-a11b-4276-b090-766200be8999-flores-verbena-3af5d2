@@ -56,7 +56,7 @@
       maxDepth: 10,
       preferDataAttributes: true,
       filterTailwind: true,
-      throttleMs: 50, // ~60fps (16ms per frame)
+      throttleMs:50, // ~60fps (16ms per frame)
       enableDebug: false,
       allowedOrigins: [], // Allowed message origins for security (incoming)
       strictOriginCheck: false, // Set to true to enforce strict origin validation
@@ -745,21 +745,20 @@
       state.currentHighlightedElement = element;
       
       const overlay = createHoverOverlay();
-      const tooltip = createTooltip();
+      // Tooltip removed - parent window handles element info display
 
       // Update overlay position
       updateOverlayPosition(overlay, element);
       
-      // Update tooltip
-      tooltip.innerHTML = generateTooltipContent(element, selector);
-      positionTooltip(tooltip, element);
+      // Tooltip functionality removed - cleaner UI
+      // The parent window will display element info in its own UI
 
       // Setup scroll/resize handlers if not already set
       if (!state.scrollHandlerId) {
         const updatePositions = () => {
           if (state.currentHighlightedElement) {
             updateOverlayPosition(overlay, state.currentHighlightedElement);
-            positionTooltip(tooltip, state.currentHighlightedElement);
+            // No tooltip to update
           }
         };
         
@@ -779,10 +778,6 @@
   function clearHighlight() {
     if (state.overlays.hover) {
       state.overlays.hover.style.display = 'none';
-    }
-    
-    if (state.overlays.tooltip) {
-      state.overlays.tooltip.style.display = 'none';
     }
 
     state.currentHighlightedElement = null;
