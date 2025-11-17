@@ -404,6 +404,11 @@
       return true;
     }
 
+    // Heading elements
+    if (/^H[1-6]$/.test(element.tagName)) {
+      return true;
+    }
+
     // Elements with direct text content (not just from children)
     const directText = Array.from(element.childNodes)
       .filter(node => node.nodeType === Node.TEXT_NODE)
@@ -414,9 +419,14 @@
       return true;
     }
 
-    // Heading elements
-    if (/^H[1-6]$/.test(element.tagName)) {
-      return true;
+    // Check if element has substantial text in immediate children (like spans)
+    const totalText = element.textContent?.trim() || '';
+    if (totalText.length > 5) {
+      // Has text content, but check if children are also semantic
+      const firstChild = element.children[0];
+      if (firstChild && /^(SPAN|STRONG|EM|B|I|P)$/.test(firstChild.tagName)) {
+        return true;
+      }
     }
 
     // Elements with specific semantic classes (not Tailwind utilities)
@@ -439,24 +449,48 @@
   function isDecorativeOverlay(element) {
     // Check if element has gradient/overlay classes
     const classList = Array.from(element.classList);
-    const hasGradient = classList.some(cls => 
-      cls.includes('gradient') || 
-      cls.includes('from-') || 
-      cls.includes('to-') ||
-      cls.includes('backdrop') ||
-      cls.includes('overlay')
+    
+    // Common decorative patterns
+    const decorativePatterns = [
+      'gradient',
+      'from-',
+      'to-',
+      'backdrop',
+      'overlay',
+      'bg-gradient',
+      'shadow',
+      'blur'
+    ];
+    
+    const hasDecorativeClass = classList.some(cls => 
+      decorativePatterns.some(pattern => cls.includes(pattern))
     );
 
-    if (!hasGradient) {
+    if (!hasDecorativeClass) {
       return false;
     }
 
-    // If it has gradient AND no significant content, it's decorative
+    // If it has decorative classes, check if it also has meaningful content
     const hasText = element.textContent.trim().length > 0;
-    const hasChildren = element.children.length > 0;
+    const hasInteractiveChildren = Array.from(element.children).some(child => 
+      ['A', 'BUTTON', 'INPUT'].includes(child.tagName)
+    );
     
-    // Decorative if: has gradient AND (no text OR is just a wrapper)
-    return hasGradient && (!hasText || !hasChildren);
+    // Decorative if: has decorative class AND no interactive children
+    // Even if it has text, if the text is in child elements, it's wrapping decorative
+    if (hasDecorativeClass && !hasInteractiveChildren) {
+      // Check if it's just a wrapper (has children that could be the real target)
+      if (element.children.length > 0) {
+        return true; // It's a wrapper, skip to children
+      }
+      
+      // No children and no text = pure decoration
+      if (!hasText) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   /**
@@ -469,6 +503,15 @@
     
     if (!elements || elements.length === 0) {
       return null;
+    }
+    
+    // Debug: Log all detected elements
+    if (state.config.enableDebug) {
+      console.log('[Lovivo Visual Edit] Elements at point:', elements.map(el => ({
+        tag: el.tagName,
+        classes: Array.from(el.classList).join(' '),
+        text: el.textContent?.substring(0, 30)
+      })));
     }
     
     // Filter and score elements
@@ -501,7 +544,22 @@
 
     // First pass: Find interactive or highly significant elements
     for (const el of candidates) {
-      if (isSignificantElement(el) && !isDecorativeOverlay(el)) {
+      const isSignificant = isSignificantElement(el);
+      const isDecorative = isDecorativeOverlay(el);
+      
+      if (state.config.enableDebug) {
+        console.log('[Lovivo Visual Edit] Checking element:', {
+          tag: el.tagName,
+          classes: Array.from(el.classList).slice(0, 3).join(' '),
+          isSignificant,
+          isDecorative
+        });
+      }
+      
+      if (isSignificant && !isDecorative) {
+        if (state.config.enableDebug) {
+          console.log('[Lovivo Visual Edit] ✅ Selected (significant):', el.tagName);
+        }
         return el;
       }
     }
@@ -509,11 +567,17 @@
     // Second pass: Return first non-decorative element
     for (const el of candidates) {
       if (!isDecorativeOverlay(el)) {
+        if (state.config.enableDebug) {
+          console.log('[Lovivo Visual Edit] ✅ Selected (non-decorative):', el.tagName);
+        }
         return el;
       }
     }
 
     // Fallback: Return first valid element (even if decorative)
+    if (state.config.enableDebug) {
+      console.log('[Lovivo Visual Edit] ⚠️ Fallback to first element:', candidates[0]?.tagName);
+    }
     return candidates[0] || null;
   }
 
@@ -1329,9 +1393,10 @@
    * - Lovivo.app (all subdomains)
    */
   (function autoConfigureLovivo() {
-    // Detect if we're in development (localhost)
-    const isDevelopment = window.location.hostname === 'localhost' || 
-                         window.location.hostname === '127.0.0.1';
+    // Detect if we're in development (localhost) or testing (lovableproject.com)
+    const hostname = window.location.hostname;
+    const isDevelopment = hostname === 'localhost' || hostname === '127.0.0.1';
+    const isTesting = hostname.includes('lovableproject.com') || hostname.includes('lovable.app');
 
     // Configure allowed origins with wildcards
     configure({
@@ -1360,8 +1425,8 @@
       strictOriginCheck: false,    // Allow parent window by default
       autoDetectParent: true,      // Auto-detect parent origin for outgoing messages
 
-      // Enable debug only in development
-      enableDebug: isDevelopment
+      // Enable debug in development AND testing environments
+      enableDebug: isDevelopment || isTesting
     });
 
     console.log('🔒 Lovivo security configured');
@@ -1374,6 +1439,9 @@
     
     if (isDevelopment) {
       console.log('🐛 Debug mode: ENABLED (localhost detected)');
+    } else if (isTesting) {
+      console.log('🐛 Debug mode: ENABLED (testing environment detected)');
+      console.log('💡 Check console for detailed element detection logs');
     }
   })();
 
@@ -1384,4 +1452,3 @@
   });
 
 })();
-
