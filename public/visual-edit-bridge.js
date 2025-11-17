@@ -388,7 +388,80 @@
   }
 
   /**
+   * Check if element is significant (has content or is interactive)
+   */
+  function isSignificantElement(element) {
+    // Interactive elements are always significant
+    const interactiveTags = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'LABEL', 'VIDEO', 'AUDIO', 'IMG'];
+    if (interactiveTags.includes(element.tagName)) {
+      return true;
+    }
+
+    // Elements with semantic attributes
+    if (element.hasAttribute('aria-label') || 
+        element.hasAttribute('title') || 
+        element.hasAttribute('role')) {
+      return true;
+    }
+
+    // Elements with direct text content (not just from children)
+    const directText = Array.from(element.childNodes)
+      .filter(node => node.nodeType === Node.TEXT_NODE)
+      .map(node => node.textContent.trim())
+      .join('');
+    
+    if (directText.length > 0) {
+      return true;
+    }
+
+    // Heading elements
+    if (/^H[1-6]$/.test(element.tagName)) {
+      return true;
+    }
+
+    // Elements with specific semantic classes (not Tailwind utilities)
+    const classList = Array.from(element.classList);
+    const hasSemanticClass = classList.some(cls => {
+      // Filter out Tailwind utility classes
+      return !cls.match(/^(text-|bg-|p-|m-|flex|grid|w-|h-|from-|to-|via-|absolute|relative|fixed)/);
+    });
+
+    if (hasSemanticClass && classList.length > 0) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if element is purely decorative (overlay/gradient)
+   */
+  function isDecorativeOverlay(element) {
+    // Check if element has gradient/overlay classes
+    const classList = Array.from(element.classList);
+    const hasGradient = classList.some(cls => 
+      cls.includes('gradient') || 
+      cls.includes('from-') || 
+      cls.includes('to-') ||
+      cls.includes('backdrop') ||
+      cls.includes('overlay')
+    );
+
+    if (!hasGradient) {
+      return false;
+    }
+
+    // If it has gradient AND no significant content, it's decorative
+    const hasText = element.textContent.trim().length > 0;
+    const hasChildren = element.children.length > 0;
+    
+    // Decorative if: has gradient AND (no text OR is just a wrapper)
+    return hasGradient && (!hasText || !hasChildren);
+  }
+
+  /**
    * Detect element at coordinates with smart filtering
+   * Prioritizes significant elements over decorative overlays
    */
   function detectElementAtPoint(x, y) {
     // Get all elements at point (in case of overlays)
@@ -398,8 +471,8 @@
       return null;
     }
     
-    // Filter out our own overlays and ignored elements
-    const validElement = elements.find(el => {
+    // Filter and score elements
+    const candidates = elements.filter(el => {
       // Ignore our overlays
       if (el === state.overlays.hover || 
           el === state.overlays.selected || 
@@ -407,18 +480,41 @@
         return false;
       }
       
-      // Ignore document elements (configurable)
-      if (el === document.documentElement) {
+      // Ignore document elements
+      if (el === document.documentElement || el === document.body) {
         return false;
       }
       
-      // Optionally allow body (could be configurable)
-      // if (el === document.body) return false;
-      
       return true;
     });
-    
-    return validElement || null;
+
+    if (candidates.length === 0) {
+      return null;
+    }
+
+    // Strategy: Find the most significant element
+    // Priority:
+    // 1. Interactive elements (buttons, links, inputs)
+    // 2. Elements with text content
+    // 3. Elements with semantic meaning
+    // 4. Skip purely decorative overlays
+
+    // First pass: Find interactive or highly significant elements
+    for (const el of candidates) {
+      if (isSignificantElement(el) && !isDecorativeOverlay(el)) {
+        return el;
+      }
+    }
+
+    // Second pass: Return first non-decorative element
+    for (const el of candidates) {
+      if (!isDecorativeOverlay(el)) {
+        return el;
+      }
+    }
+
+    // Fallback: Return first valid element (even if decorative)
+    return candidates[0] || null;
   }
 
   // ===== PHASE 4: PROFESSIONAL OVERLAY SYSTEM =====
@@ -1288,3 +1384,4 @@
   });
 
 })();
+
