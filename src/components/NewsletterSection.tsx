@@ -6,17 +6,14 @@ import { Mail } from 'lucide-react';
 /**
  * EDITABLE UI COMPONENT - NewsletterSection
  * 
- * Componente UI completamente editable para suscripción a newsletter.
- * El agente IA puede modificar colores, textos, layout, etc.
- * 
- * Consume lógica de HeadlessNewsletter (solo muestra email input).
+ * Componente de suscripción a newsletter con diseño inspirado en Verbena Flores
  */
 
 export const NewsletterSection = () => {
   return (
     <HeadlessNewsletter>
       {(logic) => (
-        <section className="bg-muted/30 py-16 border-y">
+        <section className="bg-secondary/30 py-16 border-y">
           <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             {logic.success ? (
               <div className="space-y-4">
@@ -25,21 +22,21 @@ export const NewsletterSection = () => {
                     <Mail className="h-8 w-8 text-primary" />
                   </div>
                 </div>
-                <h3 className="text-2xl font-bold text-foreground">
-                  Thanks for subscribing!
+                <h3 className="text-2xl font-bold">
+                  ¡Gracias por suscribirte!
                 </h3>
                 <p className="text-muted-foreground">
-                  You'll receive our best offers and promotions soon.
+                  Recibirás nuestras mejores ofertas y promociones pronto.
                 </p>
               </div>
             ) : (
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <h3 className="text-2xl font-bold text-foreground">
-                    Want promotional emails?
+                  <h3 className="text-2xl font-bold">
+                    ¿Quieres recibir promociones?
                   </h3>
                   <p className="text-lg text-muted-foreground">
-                    Subscribe to our newsletter and get exclusive offers
+                    Suscríbete a nuestro newsletter y recibe ofertas exclusivas
                   </p>
                 </div>
                 
@@ -52,7 +49,7 @@ export const NewsletterSection = () => {
                 >
                   <Input 
                     type="email"
-                    placeholder="your@email.com"
+                    placeholder="tu@email.com"
                     value={logic.email}
                     onChange={(e) => logic.setEmail(e.target.value)}
                     disabled={logic.isSubmitting}
@@ -62,9 +59,9 @@ export const NewsletterSection = () => {
                   <Button 
                     type="submit"
                     disabled={logic.isSubmitting}
-                    className="sm:w-auto"
+                    className="sm:w-auto bg-primary hover:bg-primary/90"
                   >
-                    {logic.isSubmitting ? 'Subscribing...' : 'Subscribe'}
+                    {logic.isSubmitting ? 'Suscribiendo...' : 'Suscribirse'}
                   </Button>
                 </form>
                 
