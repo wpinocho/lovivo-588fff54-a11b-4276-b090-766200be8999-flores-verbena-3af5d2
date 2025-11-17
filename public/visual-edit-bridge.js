@@ -1245,6 +1245,10 @@
         'https://*.lovable.app',
         'https://lovable.app',
         
+        // Lovableproject.com - Preview URLs
+        'https://*.lovableproject.com',
+        'https://lovableproject.com',
+        
         // Lovivo.app - Production and subdomains
         'https://*.lovivo.app',
         'https://lovivo.app',
@@ -1267,6 +1271,7 @@
     console.log('🔒 Lovivo security configured');
     console.log('📋 Allowed origins:', [
       '*.lovable.app',
+      '*.lovableproject.com',
       '*.lovivo.app',
       'localhost (dev)'
     ]);
