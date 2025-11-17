@@ -45,13 +45,18 @@
     currentSelectedElement: null,
     selectorCache: new WeakMap(),
     
+    // Performance tracking
+    lastHoveredSelector: null,
+    lastDetectionTime: 0,
+    pendingDetection: null,
+    
     // Configuration
     config: {
       timeout: 1000,
       maxDepth: 10,
       preferDataAttributes: true,
       filterTailwind: true,
-      throttleMs: 16, // ~60fps
+      throttleMs: 16, // ~60fps (16ms per frame)
       enableDebug: false,
       allowedOrigins: [], // Allowed message origins for security (incoming)
       strictOriginCheck: false, // Set to true to enforce strict origin validation
@@ -927,19 +932,43 @@
   }
 
   /**
-   * Handle element detection with throttling
-   * Uses requestAnimationFrame for optimal performance
+   * Handle element detection with throttling + deduplication
+   * Industry best practices:
+   * - RAF throttling (60fps max)
+   * - Deduplication (don't send same selector twice)
+   * - Time-based throttling (configurable)
    */
   function handleDetectElement(data) {
     const { x, y, action } = data;
     
-    // Use RAF for smooth 60fps updates
+    // Strategy 1: RAF Throttling - Only process one detection per frame
     if (state.rafId) {
-      return; // Already processing
+      // Store latest pending detection to process after current frame
+      state.pendingDetection = { x, y, action };
+      return;
     }
     
     state.rafId = requestAnimationFrame(() => {
       try {
+        // Strategy 2: Time-based Throttling - Configurable minimum interval
+        const now = Date.now();
+        const timeSinceLastDetection = now - state.lastDetectionTime;
+        
+        // For hover actions, enforce minimum time between detections
+        if (action === 'hover' && timeSinceLastDetection < state.config.throttleMs) {
+          state.rafId = null;
+          
+          // Process pending detection if exists
+          if (state.pendingDetection) {
+            const pending = state.pendingDetection;
+            state.pendingDetection = null;
+            handleDetectElement(pending);
+          }
+          return;
+        }
+        
+        state.lastDetectionTime = now;
+        
         // Adjust coordinates for iframe
         const adjusted = adjustCoordinatesForIframe(x, y);
         
@@ -947,32 +976,52 @@
         const element = detectElementAtPoint(adjusted.x, adjusted.y);
 
         if (!element) {
-          sendMessage(MESSAGE_TYPES.NO_ELEMENT, { action });
-          clearHighlight();
+          // Strategy 3: Deduplication - Only send if different from last
+          if (state.lastHoveredSelector !== null) {
+            state.lastHoveredSelector = null;
+            sendMessage(MESSAGE_TYPES.NO_ELEMENT, { action });
+            clearHighlight();
+          }
           state.rafId = null;
           return;
         }
 
-        // Generate optimal selector
+        // Generate optimal selector (cached for performance)
         const selector = generateOptimalSelector(element);
 
         if (!selector) {
-          sendMessage(MESSAGE_TYPES.NO_ELEMENT, { action });
-          clearHighlight();
+          if (state.lastHoveredSelector !== null) {
+            state.lastHoveredSelector = null;
+            sendMessage(MESSAGE_TYPES.NO_ELEMENT, { action });
+            clearHighlight();
+          }
           state.rafId = null;
           return;
         }
 
-        if (state.config.enableDebug) {
-          console.log('[Lovivo Visual Edit] Detected:', { selector, element });
-        }
-
         if (action === 'hover') {
-          highlightElement(element, selector);
-          sendMessage(MESSAGE_TYPES.ELEMENT_HOVERED, { selector });
+          // Strategy 3: Deduplication - Only send/update if selector changed
+          if (selector !== state.lastHoveredSelector) {
+            state.lastHoveredSelector = selector;
+            highlightElement(element, selector);
+            sendMessage(MESSAGE_TYPES.ELEMENT_HOVERED, { selector });
+            
+            if (state.config.enableDebug) {
+              console.log('[Lovivo Visual Edit] ✅ Hover changed to:', selector);
+            }
+          } else if (state.config.enableDebug) {
+            // Same element - deduplicated, no message sent
+            console.log('[Lovivo Visual Edit] ⏭️ Skipped (same element):', selector);
+          }
         } else if (action === 'click') {
+          // Clicks are always processed (user intent)
+          state.lastHoveredSelector = selector;
           showSelection(element);
           sendMessage(MESSAGE_TYPES.ELEMENT_CLICKED, { selector });
+          
+          if (state.config.enableDebug) {
+            console.log('[Lovivo Visual Edit] 🖱️ Click:', selector);
+          }
         }
       } catch (error) {
         console.error('[Lovivo Visual Edit] Error detecting element:', error);
@@ -982,6 +1031,13 @@
         });
       } finally {
         state.rafId = null;
+        
+        // Process pending detection if exists
+        if (state.pendingDetection) {
+          const pending = state.pendingDetection;
+          state.pendingDetection = null;
+          handleDetectElement(pending);
+        }
       }
     });
   }
